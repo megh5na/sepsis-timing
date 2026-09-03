@@ -1,0 +1,45 @@
+# Shared hyperparameters (spec §8). Condition-specific configs (b1.yaml,
+# a1/p1/p2.yaml when Phase 2 begins) inherit these and override only what's
+# genuinely condition-specific.
+
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  K_horizons: 12          # spec §3.2; only consumed by Phase 2 heads
+
+training_hour_selection: "b"   # spec §3.3: (a) all hours, (b) hours <= t_sepsis
+                                # for septic patients, all hours for non-septic.
+                                # (b) adopted per the spec's own recommendation
+                                # (post-onset hours are a degenerate prediction
+                                # task and dilute the gradient) — recorded here
+                                # so the choice is explicit and reviewable.
+
+split:
+  regime: within_hospital   # required regime for Phase 1 (spec §3.5); the
+                             # only one actually run. cross_hospital and
+                             # pooled are implemented (src/data/splits.py)
+                             # but out of Phase-1 scope (spec §11.1).
+  hospital: A
+  train_frac: 0.70
+  val_frac: 0.15
+  test_frac: 0.15
+
+encoder:
+  type: GRU
+  input_size: 120
+  hidden_size: 64
+  num_layers: 2
+  dropout: 0.2
+  bidirectional: false
+
+training:
+  optimizer: adam
+  learning_rate: 1.0e-3
+  batch_size: 64            # patients per batch
+  max_epochs: 50
+  early_stopping_metric: val_normalized_utility
+  early_stopping_patience: 8
+  grad_clip_norm: 1.0
+  checkpoint_on: val_normalized_utility   # not val_loss (spec §8)
+
+seeds: [0, 1, 2]             # minimum 3 (spec §6.2)

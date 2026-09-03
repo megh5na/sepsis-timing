@@ -1,0 +1,10 @@
+# Condition B0 (spec §6 table): rule-based qSOFA 2-criterion proxy
+# (src/decision/qsofa.py — see that module for the disclosed deviation
+# from true 3-criterion qSOFA). No encoder, no learned parameters, no
+# training loop, no seed-dependence — included in the seed grid only so
+# results/analyse.py can report it alongside B1 uniformly (its metrics are
+# identical across "seeds" by construction).
+condition: B0
+head: null
+loss: null
+decision_rule: qsofa_2_criterion_proxy

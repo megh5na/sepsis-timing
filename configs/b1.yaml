@@ -1,0 +1,14 @@
+# Condition B1 (spec §6 table): GRU(64) + sigmoid head + BCE, tuned
+# threshold. Standard control condition. Inherits configs/base.yaml.
+condition: B1
+head: sigmoid
+loss: bce_per_hour_sepsislabel
+decision_rule: tuned_threshold
+threshold_search:
+  n_candidates: 40   # candidate tau values swept on [0.01, 0.99] every epoch
+                      # during training (spacing ~0.025); this runs inside
+                      # the training loop up to max_epochs times per seed, so
+                      # it trades precision for wall-clock time — 40 was
+                      # chosen empirically as enough resolution for early
+                      # stopping/checkpointing to track the right optimum
+                      # without threshold tuning dominating epoch time.
