@@ -1,13 +1,3 @@
-"""Train a single condition, single seed (spec repo layout: experiments/train.py).
-
-Phase 1 conditions:
-  B0 — rule-based qSOFA proxy, no training (src/decision/qsofa.py).
-  B1 — GRU(64) encoder + sigmoid head, BCE against per-hour SepsisLabel,
-       tuned threshold. This is the only condition that actually trains.
-
-Training-hour selection, checkpoint-on-val-utility, early stopping,
-gradient clipping, optimiser: all per spec §8 / configs/base.yaml.
-"""
 from __future__ import annotations
 
 import argparse
@@ -33,8 +23,6 @@ from src.models.heads import SigmoidHead
 
 
 def fit_train_stats(train_patient_ids: list[str], processed_root: Path) -> TrainStats:
-    """Guard #2: fit strictly on the training split's raw VALUES block
-    (forward-filled, pre-z-score), before any val/test data is read."""
     X_list = []
     for pid in train_patient_ids:
         X_raw = load_patient_tensor(processed_root, pid)
@@ -68,17 +56,6 @@ def masked_bce_loss(r: torch.Tensor, sepsis_label: torch.Tensor, train_mask: tor
 def score_all_patients(model: B1Model, patient_ids: list[str], manifest: pd.DataFrame,
                         processed_root: Path, stats: TrainStats,
                         dataset: "SepsisDataset | None" = None) -> dict[str, np.ndarray]:
-    """r[t] for every hour of every patient (no train_mask applied — this
-    is inference, spec §3.3: evaluation covers all hours).
-
-    Pass a pre-built `dataset` (e.g. the validation SepsisDataset built
-    once outside the training loop) to reuse its cache across repeated
-    calls — this is called once per epoch during training, and rebuilding
-    a fresh SepsisDataset internally on every call would re-read every
-    validation patient from disk and recompute VALUES/MASK/DELTA every
-    single epoch for no reason (see SepsisDataset's docstring on why
-    caching is safe here). If omitted, a fresh uncached dataset is built
-    (fine for one-off scoring, e.g. in src/experiments/analyse.py)."""
     model.eval()
     ds = dataset if dataset is not None else SepsisDataset(patient_ids, manifest, processed_root, stats)
     scores = {}
@@ -91,10 +68,6 @@ def score_all_patients(model: B1Model, patient_ids: list[str], manifest: pd.Data
 
 
 def val_normalized_utility(scores: dict[str, np.ndarray], tau: float, manifest: pd.DataFrame) -> float:
-    """Fast, in-memory path (src/eval/harness.py:evaluate_fast) — called up
-    to n_threshold_candidates times per epoch, so the disk-based evaluate()
-    (validated against the official scorer in tests/test_harness_validation.py,
-    and agreeing with evaluate_fast exactly there) would dominate runtime."""
     patient_ids = list(scores.keys())
 
     def predict_fn(pid):

@@ -1,0 +1,28 @@
+{
+  "name": "K6",
+  "seed": 1,
+  "cond": {
+    "head": "monotone",
+    "K": 6,
+    "hidden": 64,
+    "mask_delta": true
+  },
+  "n_params": 61062,
+  "best_epoch": 8,
+  "best_val_p1_utility_selection_grid": 0.38812974816436147,
+  "tau_p1": 0.038,
+  "val_p1_utility_at_tau": 0.3897064250537648,
+  "weights_sha256": "99f7eacacc18ed808e08d103ec5855f5562158b3238cea88521b9e60c4cc9188",
+  "epochs_run": 17,
+  "torch_threads": 2,
+  "train_seconds": 717.1,
+  "training": {
+    "optimizer": "adam",
+    "lr": 0.001,
+    "batch_size": 64,
+    "max_epochs": 50,
+    "patience": 8,
+    "grad_clip": 1.0,
+    "hour_selection": "b"
+  }
+}

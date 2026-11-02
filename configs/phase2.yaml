@@ -1,0 +1,17 @@
+# Phase 2 training conditions (spec 6, 6.1). Everything not listed here comes from base.yaml:
+# GRU encoder (2 layers, dropout 0.2, unidirectional), Adam lr 1e-3, batch 64 patients,
+# max 50 epochs, early stopping patience 8, grad clip 1.0, training hours option (b),
+# within-hospital A split. Seeds 0, 1, 2.
+#
+# P1 and P2 are NOT separate training runs: both are decision rules applied to the weights
+# trained as condition "P" (spec 6: "train once, derive alarms two ways").
+split: {hospital: A, seed: 0}
+seeds: [0, 1, 2]
+conditions:
+  P:    {head: monotone,    K: 12, hidden: 64,  mask_delta: true}    # -> P1, P2
+  A1:   {head: independent, K: 12, hidden: 64,  mask_delta: true}    # H3 ablation
+  K6:   {head: monotone,    K: 6,  hidden: 64,  mask_delta: true}
+  K18:  {head: monotone,    K: 18, hidden: 64,  mask_delta: true}
+  NOMD: {head: monotone,    K: 12, hidden: 64,  mask_delta: false}   # values only, 40 input channels
+  H32:  {head: monotone,    K: 12, hidden: 32,  mask_delta: true}
+  H128: {head: monotone,    K: 12, hidden: 128, mask_delta: true}

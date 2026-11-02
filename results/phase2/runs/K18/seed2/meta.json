@@ -1,0 +1,28 @@
+{
+  "name": "K18",
+  "seed": 2,
+  "cond": {
+    "head": "monotone",
+    "K": 18,
+    "hidden": 64,
+    "mask_delta": true
+  },
+  "n_params": 61842,
+  "best_epoch": 14,
+  "best_val_p1_utility_selection_grid": 0.3829479658450299,
+  "tau_p1": 0.034,
+  "val_p1_utility_at_tau": 0.3916814069200718,
+  "weights_sha256": "10b05456b6ed4ae67f6fa7eb025fe84a144079944eb245edecfb8b70a793b4d8",
+  "epochs_run": 23,
+  "torch_threads": 2,
+  "train_seconds": 3642.3,
+  "training": {
+    "optimizer": "adam",
+    "lr": 0.001,
+    "batch_size": 64,
+    "max_epochs": 50,
+    "patience": 8,
+    "grad_clip": 1.0,
+    "hour_selection": "b"
+  }
+}

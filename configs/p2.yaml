@@ -1,0 +1,4 @@
+# Condition P2 (spec 6 table). The proposed method. Same trained weights as P1.
+condition: P2
+trained_as: P
+decision_rule: expected-utility stopping rule (src/decision/stopping.py), no parameters

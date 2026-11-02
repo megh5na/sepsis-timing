@@ -1,17 +1,3 @@
-"""PyTorch Dataset/collate glue for B0/B1 (Phase 1). Bridges the pure
-functions in parse.py / preprocess.py / stats.py to torch tensors and
-batches.
-
-Training-hour selection (spec §3.3, option (b), adopted — see
-configs/base.yaml): for septic patients, only hours t <= t_sepsis
-contribute to the training loss (post-onset hours are a degenerate
-prediction task — SepsisLabel is trivially 1 — and dilute the gradient);
-all hours contribute for non-septic patients. This is a *training-time*
-mask only. Evaluation always covers every hour of every patient's stay
-(spec §3.3: "Evaluation must still cover all hours, because the official
-scorer does"), and nothing in this module or in src/eval/harness.py
-applies train_mask at evaluation time.
-"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -64,17 +50,6 @@ def build_patient_example(
 
 
 class SepsisDataset(Dataset):
-    """Caches each patient's built example (disk read + VALUES/MASK/DELTA
-    computation) after the first access. This is safe specifically because
-    `stats` is fixed for the lifetime of one SepsisDataset instance (fit
-    once before construction, spec §3.6 guard #2) — Z is a deterministic
-    function of (raw X, stats), so nothing changes between epochs and
-    recomputing it from disk on every epoch (the model trains for up to 50
-    epochs, spec §8) would be pure waste. A fresh TrainStats/SepsisDataset
-    per training run still fits and reads the training split fresh, so this
-    does not weaken guard #2 — it only avoids repeating identical work
-    within one already-guarded run."""
-
     def __init__(self, patient_ids: list[str], manifest: pd.DataFrame, processed_root: Path, stats: TrainStats):
         self.patient_ids = patient_ids
         self.manifest = manifest.set_index("patient_id")

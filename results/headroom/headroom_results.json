@@ -1,0 +1,9 @@
+{
+  "achieved": 0.3762175025132662,
+  "threshold_ceiling": 0.8787384039805047,
+  "oracle_ceiling": 1.0,
+  "gap_achieved_to_threshold_ceiling": 0.5025209014672385,
+  "gap_threshold_ceiling_to_oracle": 0.12126159601949527,
+  "n_val_patients": 3050,
+  "global_tau": 0.03512820512820513
+}

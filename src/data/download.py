@@ -1,23 +1,3 @@
-"""Fetch and verify the PhysioNet/CinC Challenge 2019 training archives.
-
-Downloads every per-patient .psv file from the two official training sets
-(Hospital A, Hospital B) directly from PhysioNet's open-access file server.
-No credentialing or data-use agreement is required for this dataset (see
-spec §2.1).
-
-Usage:
-    python -m src.data.download --out data/raw [--workers 32]
-
-The PhysioNet server exposes a plain Apache-style directory listing for
-    https://physionet.org/files/challenge-2019/1.0.0/training/training_setA/
-    https://physionet.org/files/challenge-2019/1.0.0/training/training_setB/
-each row giving a filename and a byte size. We parse that listing to get
-the authoritative file list (rather than hardcoding an expected patient
-count), download each file, and verify it against the size reported in the
-listing. This also gives us an early, independent check on the published
-patient counts (20,336 for Hospital A, 20,000 for Hospital B) before any
-parsing happens.
-"""
 from __future__ import annotations
 
 import argparse
@@ -34,7 +14,6 @@ HOSPITALS = {"A": "training_setA", "B": "training_setB"}
 
 
 def list_remote_files(hospital: str, session: requests.Session) -> dict[str, int]:
-    """Return {filename: expected_size_bytes} parsed from the directory index."""
     url = f"{BASE_URL}/{HOSPITALS[hospital]}/"
     resp = session.get(url, timeout=60)
     resp.raise_for_status()

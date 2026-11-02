@@ -1,15 +1,3 @@
-"""U() must reproduce the official scorer's output (spec §5.1, stage 5 gate).
-
-No bundled "example data" ships with the PhysioNet evaluation repos (see
-src/decision/utility.py docstring for what was actually checked). The
-validation here is instead: for many random synthetic patients, summing
-U() over every hour equals the vendored, unmodified
-compute_prediction_utility's per-patient total, exactly — which is a
-stronger check than agreement on one fixed example would be, since it
-exercises every branch of the piecewise utility curve (early TP, optimal
-TP, late TP, early FN, late FN, FP, TN) across many onset times and
-prediction patterns.
-"""
 import numpy as np
 import pytest
 
@@ -51,8 +39,6 @@ class TestUAgreesWithOfficialScorer:
 
     @pytest.mark.parametrize("seed", range(50))
     def test_random_septic_patient_alarm_once_persists(self, seed):
-        """The realistic case: an alarm fires once and stays on (spec §5.3
-        semantics), not i.i.d. random per-hour predictions."""
         rng = np.random.default_rng(seed)
         T = int(rng.integers(10, 150))
         label, t_sepsis = _random_septic_patient(rng, T)
@@ -82,10 +68,6 @@ class TestUAgreesWithOfficialScorer:
         assert total_utility_for_patient(predictions, None, T) == 0.0
 
     def test_non_septic_false_alarm_penalised_every_hour_it_persists(self):
-        """Documents a real, easy-to-miss property of the official scorer:
-        for non-septic patients, u_fp applies at EVERY hour predictions==1,
-        not once per alarm. If a decision rule leaves the alarm on, it pays
-        u_fp repeatedly."""
         T = 10
         predictions = np.ones(T, dtype=int)
         got = total_utility_for_patient(predictions, None, T)

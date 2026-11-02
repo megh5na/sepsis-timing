@@ -1,0 +1,4 @@
+{
+  "chosen_on_validation": "event-level + shared Platt",
+  "rule": "highest seed-averaged validation utility among the six variants"
+}

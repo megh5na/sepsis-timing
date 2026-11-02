@@ -1,0 +1,28 @@
+{
+  "name": "H32",
+  "seed": 2,
+  "cond": {
+    "head": "monotone",
+    "K": 12,
+    "hidden": 32,
+    "mask_delta": true
+  },
+  "n_params": 21516,
+  "best_epoch": 16,
+  "best_val_p1_utility_selection_grid": 0.384509372256086,
+  "tau_p1": 0.051000000000000004,
+  "val_p1_utility_at_tau": 0.3846658946591502,
+  "weights_sha256": "d164738b97f4a75854261f4082cb9ab400ccea1f559bd6d60c83b61cbfadf1c8",
+  "epochs_run": 25,
+  "torch_threads": 2,
+  "train_seconds": 1004.1,
+  "training": {
+    "optimizer": "adam",
+    "lr": 0.001,
+    "batch_size": 64,
+    "max_epochs": 50,
+    "patience": 8,
+    "grad_clip": 1.0,
+    "hour_selection": "b"
+  }
+}

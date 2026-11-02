@@ -1,0 +1,28 @@
+{
+  "name": "NOMD",
+  "seed": 1,
+  "cond": {
+    "head": "monotone",
+    "K": 12,
+    "hidden": 64,
+    "mask_delta": false
+  },
+  "n_params": 46092,
+  "best_epoch": 14,
+  "best_val_p1_utility_selection_grid": 0.3619765089141419,
+  "tau_p1": 0.038,
+  "val_p1_utility_at_tau": 0.364479594823308,
+  "weights_sha256": "1b8b52e105c3aa1855969d3b4626f680a0163eb19daa91a9f16b751176f790a5",
+  "epochs_run": 23,
+  "torch_threads": 2,
+  "train_seconds": 2222.0,
+  "training": {
+    "optimizer": "adam",
+    "lr": 0.001,
+    "batch_size": 64,
+    "max_epochs": 50,
+    "patience": 8,
+    "grad_clip": 1.0,
+    "hour_selection": "b"
+  }
+}

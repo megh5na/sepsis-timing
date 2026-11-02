@@ -1,11 +1,3 @@
-"""Stage 2 EDA (spec §10.1 stage 2): missingness, onset-time distribution,
-does measurement frequency rise before onset, hospital A vs B differences.
-
-Run as a script; writes figures and a small text summary to results/eda/.
-notebooks/01_eda.ipynb is a thin wrapper that calls `run_all` and displays
-the same figures inline — the analysis itself lives here so it's testable
-and re-runnable outside a notebook kernel.
-"""
 from __future__ import annotations
 
 import argparse
@@ -22,8 +14,6 @@ from src.data.parse import FEATURE_COLUMNS, load_patient_tensor
 
 def missingness_by_channel(manifest: pd.DataFrame, processed_root: Path,
                             hospital: str | None = None) -> pd.DataFrame:
-    """Fraction of (patient, hour) cells that are NaN, per channel.
-    hospital=None pools A+B; hospital='A'/'B' restricts to one site."""
     sub = manifest if hospital is None else manifest[manifest["hospital"] == hospital]
     n_missing = np.zeros(len(FEATURE_COLUMNS))
     n_total = np.zeros(len(FEATURE_COLUMNS))
@@ -38,14 +28,6 @@ def missingness_by_channel(manifest: pd.DataFrame, processed_root: Path,
 
 
 def missingness_by_channel_and_hospital(manifest: pd.DataFrame, processed_root: Path) -> pd.DataFrame:
-    """Wide table: one row per channel, one column per hospital's
-    frac_missing, plus the absolute difference — surfaces site-specific
-    data-collection artifacts (e.g. a channel entirely absent at one
-    hospital) that a pooled-only missingness table would hide. This is
-    exactly the kind of hospital A/B difference spec stage 2 asks for, and
-    it directly affects stage 3: src/data/stats.py.TrainStats.fit() must
-    (and does) handle a channel with zero training-split observations
-    rather than crashing on it."""
     a = missingness_by_channel(manifest, processed_root, hospital="A").set_index("channel")
     b = missingness_by_channel(manifest, processed_root, hospital="B").set_index("channel")
     out = pd.DataFrame({"frac_missing_A": a["frac_missing"], "frac_missing_B": b["frac_missing"]})
@@ -63,17 +45,6 @@ def onset_time_distribution(manifest: pd.DataFrame) -> np.ndarray:
 def measurement_frequency_before_onset(
     manifest: pd.DataFrame, processed_root: Path, window: int = 24
 ) -> pd.DataFrame:
-    """For septic patients, does the fraction of genuinely-observed (non-NaN)
-    cells rise in the `window` hours immediately before t_sepsis, relative
-    to earlier in the stay? This is the mechanism check the spec asks for:
-    if measurement frequency does NOT rise before onset, the mask/delta
-    ablation (Phase 2) has no signal to exploit.
-
-    Returns a DataFrame indexed by hours-relative-to-onset (-window..-1)
-    with the mean observed-fraction across all channels and septic
-    patients at that relative hour, plus a 'baseline' fraction computed
-    from all hours more than `window` before onset, for comparison.
-    """
     septic = manifest[manifest["is_septic"]]
     rows_by_offset: dict[int, list[float]] = {o: [] for o in range(-window, 0)}
     baseline_vals: list[float] = []

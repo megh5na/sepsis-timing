@@ -1,25 +1,4 @@
-"""Stage 1 gate check (spec §10.1): does the manifest reproduce the
-published patient and prevalence counts?
-
-Reference values and their source (checked at implementation time against
-the official PhysioNet challenge page and the Reyna et al. 2019 paper, not
-recalled from memory without a citation):
-
-  - Hospital A: 20,336 patients   (physionet.org/content/challenge-2019/1.0.0/)
-  - Hospital B: 20,000 patients   (physionet.org/content/challenge-2019/1.0.0/)
-  - Total:      40,336 patients
-  - Septic (overall): ~2,932 patients (~7.3%)
-      Reyna, M.A. et al. (2019), "Early Prediction of Sepsis From Clinical
-      Data: The PhysioNet/Computing in Cardiology Challenge 2019."
-      Widely reported as ~7.2-7.3% overall prevalence; we check within a
-      tolerance band rather than an exact count since slightly different
-      sources round differently.
-
-This script only *compares* — it never feeds these numbers into
-preprocessing, training, or evaluation logic. If the parsed manifest
-disagrees, that's a signal our parser or the six-hour offset logic is
-wrong, not a signal to change the reference values.
-"""
+# compares parsed manifest counts to published reference values
 from __future__ import annotations
 
 import argparse

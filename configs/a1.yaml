@@ -1,0 +1,5 @@
+# Condition A1 (spec 6 table). Unconstrained multi-horizon head, tests H3. Decision layer as in P2,
+# applied to the running maximum of F because A1's F can decrease in k.
+condition: A1
+trained_as: A1
+decision_rule: expected-utility stopping rule on cummax(F)

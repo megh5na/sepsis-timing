@@ -1,31 +1,5 @@
-"""The single-hour utility function U(prediction, hour, t_sepsis) (spec
-§5.1), extracted from the official scorer — not from memory, not from a
-paper's description of it.
-
-Source of truth: third_party/physionet/evaluate_sepsis_score.py,
-`compute_prediction_utility` (vendored unmodified; see
-third_party/physionet/PROVENANCE.md). That function computes a *per-patient
-total* utility by looping over hours and, at each hour, applying a
-piecewise-linear function of (prediction, t - t_sepsis) that depends on
-whether the patient is septic. This module inlines exactly that per-hour
-piecewise logic as a standalone function U(), so it can be called directly
-by the decision layer (Phase 2) and by threshold tuning / evaluation
-(Phase 1) without re-deriving it.
-
-Constants (also copied verbatim from the vendored script, not recalled):
-    dt_early = -12, dt_optimal = -6, dt_late = 3
-    max_u_tp = 1, min_u_fn = -2, u_fp = -0.05, u_tn = 0
-
-Verification: `tests/test_utility.py` checks, for many random synthetic
-patients, that summing U() over every hour of a patient's stay reproduces
-`compute_prediction_utility`'s output on the *same* vendored function,
-exactly. The PhysioNet challenge repositories do not ship a separate
-"example data" bundle for this script (checked directly against
-physionetchallenges/evaluation-2019 and the *-example-2019 repos — see
-third_party/physionet/PROVENANCE.md) — the vendored script itself is the
-reference, and this equivalence check against it, run over many random
-cases rather than one fixed example, is the validation the spec calls for.
-"""
+# in short, this module is a direct translation of the official scorer's per-hour utility function into a standalone function U() that can be used in our codebase without relying on the vendored script.
+# d = hour - t_sepsis
 from __future__ import annotations
 
 import numpy as np
@@ -52,14 +26,6 @@ _B3 = -_M3 * DT_OPTIMAL
 
 
 def U(prediction: int, hour: int, t_sepsis: float | None) -> float:
-    """Utility of a single binary prediction (0/1) at a given hour of a
-    patient's stay, given that patient's t_sepsis (None if non-septic).
-
-    Mirrors, hour-by-hour, the body of the vendored
-    `compute_prediction_utility`'s loop. Summing U() over t=0..T-1 for a
-    patient reproduces that function's per-patient total utility exactly
-    (tests/test_utility.py checks this on random cases).
-    """
     is_septic = t_sepsis is not None
     t_sepsis_val = float(t_sepsis) if is_septic else float("inf")
     t = hour
@@ -84,19 +50,12 @@ def U(prediction: int, hour: int, t_sepsis: float | None) -> float:
 
 
 def total_utility_for_patient(predictions: np.ndarray, t_sepsis: float | None, T: int | None = None) -> float:
-    """Σ_t U(predictions[t], t, t_sepsis) over the full stay. Equivalent to
-    calling the vendored compute_prediction_utility with the corresponding
-    labels array, but takes t_sepsis directly rather than a labels vector
-    (so it can be called with a hypothetical/counterfactual t_sepsis, which
-    the decision layer needs)."""
     predictions = np.asarray(predictions)
     T = T if T is not None else len(predictions)
     return float(sum(U(int(predictions[t]), t, t_sepsis) for t in range(T)))
 
 
 def reference_total_utility(labels: np.ndarray, predictions: np.ndarray) -> float:
-    """Pass-through to the vendored official function, for direct
-    side-by-side comparison in tests."""
     return compute_prediction_utility(
         list(labels), list(predictions), DT_EARLY, DT_OPTIMAL, DT_LATE, MAX_U_TP, MIN_U_FN, U_FP, U_TN
     )

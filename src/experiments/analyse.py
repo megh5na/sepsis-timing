@@ -1,35 +1,3 @@
-"""Stage 7: threshold headroom analysis (spec §10.3) — the Phase 1 payoff.
-
-Using B1's trained model on the validation set, compute three utility
-figures:
-  1. achieved            — single global tuned tau, applied uniformly.
-  2. threshold_ceiling    — per-patient retrospectively-optimal tau
-                             (physically unachievable; upper bound on any
-                             thresholding scheme with this model).
-  3. oracle_ceiling       — knowing t_sepsis, alarm at the single
-                             utility-maximising hour; upper bound on any
-                             decision rule at all.
-
-NOTE ON THE ORACLE CEILING, stated plainly because it looks suspicious at
-first glance: under the alarm_hour interface's semantics ("once fired,
-stays alarmed" — spec §5.3, implemented in src/eval/harness.py), a single
-alarm that fires at max(0, t_sepsis + dt_early) and never turns off earns
-EXACTLY the same total utility as the official scorer's own "best_predictions"
-window (on only during [t_sepsis+dt_early, t_sepsis+dt_late], off outside
-it) — because every hour after t_sepsis + dt_late contributes exactly 0
-utility regardless of the prediction, for a septic patient (see the outer
-`if t <= t_sepsis + dt_late` gate in
-third_party/physionet/evaluate_sepsis_score.py:compute_prediction_utility).
-That "best" quantity is also the denominator's numerator-reference in the
-official normalisation formula, so the oracle ceiling's normalised utility
-is 1.0 by construction, not an empirical finding about this dataset. This
-script computes it via the actual oracle alarm rule (not by hardcoding
-1.0), specifically so that a bug in the reasoning above would show up as a
-number other than 1.0 rather than being silently assumed away — but 1.0 is
-the expected, correct result, and the report should say so rather than
-present it as a surprise. The genuinely informative gaps are (1)->(2) and
-(2)->(3), exactly as the spec frames them.
-"""
 from __future__ import annotations
 
 import argparse
@@ -64,10 +32,6 @@ def per_patient_optimal_threshold_utility(
     scores: dict[str, np.ndarray], manifest: pd.DataFrame, patient_ids: list[str],
     candidate_taus: np.ndarray,
 ) -> tuple[float, float, float]:
-    """Returns (normalized_utility, observed_total, denom) where denom =
-    best_total - inaction_total (shared with the oracle computation, since
-    'best'/'inaction' are properties of (t_sepsis, T) alone, independent of
-    the decision rule)."""
     manifest_idx = manifest.set_index("patient_id")
     observed_total = 0.0
     best_total = 0.0
@@ -110,9 +74,6 @@ def per_patient_optimal_threshold_utility(
 
 
 def oracle_alarm_time_utility(manifest: pd.DataFrame, patient_ids: list[str]) -> tuple[float, float, float]:
-    """Knowing t_sepsis directly (no model involved), alarm at the single
-    utility-maximising hour. See module docstring for why this equals 1.0
-    on the normalised scale."""
     from src.decision.utility import DT_LATE
 
     manifest_idx = manifest.set_index("patient_id")

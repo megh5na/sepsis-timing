@@ -1,0 +1,3 @@
+category,patient-seeds,septic share,mean utility P2 - P1,sum utility P2 - P1,median alarm shift P1 - P2 (h),"median F[t,6] at P2 alarm","median F[t,6] at P1 alarm",median expected onset ahead at P2 alarm (h),median expected onset ahead at P1 alarm (h)
+"both alarm, P2 earlier",1466,0.25306957708049116,-0.1365582840685159,-200.1944444444443,3.0,0.0316421203315258,0.05936146900057793,6.541388149127005,6.3424471950270656
+only P2 alarms,1150,0.09565217391304348,0.06080676328502408,69.92777777777769,,0.031095373444259167,,6.597450306257386,

@@ -1,31 +1,3 @@
-"""Parse raw .psv files into per-patient tensors and a manifest table.
-
-Implements spec §2.2-2.4, with special attention to §2.3 (the six-hour
-label offset — see CRITICAL note below).
-
-For each patient file:
-    X            (T, 40) float array, NaN preserved, column order = the
-                 41-column header minus SepsisLabel (same order as file)
-    t_sepsis     int hour index, or None if non-septic
-    is_septic    bool
-    T            int, number of hours in the stay
-
-CRITICAL — six-hour offset (spec §2.3):
-    SepsisLabel is NOT the onset indicator. Per the official PhysioNet
-    definition, and independently confirmed by reading the official scoring
-    script (third_party/physionet/evaluate_sepsis_score.py,
-    compute_prediction_utility: `t_sepsis = np.argmax(labels) - dt_optimal`
-    with dt_optimal = -6), SepsisLabel is 1 for all hours t >= t_sepsis - 6.
-    Therefore:
-
-        first_positive_hour = index of first row where SepsisLabel == 1
-        t_sepsis             = first_positive_hour + 6
-
-    This file computes t_sepsis exactly this way and nowhere else. Every
-    downstream module (targets, decision layer, utility) must consume
-    t_sepsis from the manifest/parsed record — never re-derive it from
-    SepsisLabel directly — so this offset is applied in exactly one place.
-"""
 from __future__ import annotations
 
 import argparse
@@ -62,7 +34,6 @@ class ParsedPatient:
 
 
 def first_positive_hour(sepsis_label: np.ndarray) -> int | None:
-    """0-indexed row of the first SepsisLabel == 1, or None if never positive."""
     hits = np.flatnonzero(sepsis_label == 1)
     if hits.size == 0:
         return None
@@ -83,7 +54,7 @@ def parse_patient_file(path: Path, hospital: str) -> ParsedPatient:
 
     fph = first_positive_hour(label)
     is_septic = fph is not None
-    t_sepsis = fph + 6 if is_septic else None
+    t_sepsis = fph + 6 if is_septic else None ## !!!!
 
     patient_id = path.stem  # e.g. "p000001"
     return ParsedPatient(
@@ -97,12 +68,6 @@ def parse_patient_file(path: Path, hospital: str) -> ParsedPatient:
 
 
 def parse_all(raw_root: Path, out_root: Path) -> pd.DataFrame:
-    """Parse every patient file under raw_root/{training_setA,training_setB}/.
-
-    Writes one .npz per patient to out_root/tensors/, and returns the
-    manifest DataFrame (also written to out_root/manifest.parquet and
-    out_root/manifest.csv).
-    """
     tensor_dir = out_root / "tensors"
     tensor_dir.mkdir(parents=True, exist_ok=True)
 

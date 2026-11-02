@@ -1,6 +1,8 @@
 data/raw/
 data/processed/
-results/
+results/grid/B0/
+results/grid/B1/
+results/headroom/achieved/
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -8,3 +10,6 @@ __pycache__/
 .DS_Store
 *.pt
 *.ipynb_checkpoints/
+results/phase2/runs/**/*.npz
+results/phase2/eval/
+results/phase2/queue.txt

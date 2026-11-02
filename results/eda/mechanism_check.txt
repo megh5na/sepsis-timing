@@ -1,0 +1,3 @@
+Mean fraction observed, last 6h before onset: 0.3102
+Baseline (>24h before onset): 0.3121
+Measurement frequency rises before onset: False

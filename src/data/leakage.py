@@ -1,24 +1,3 @@
-"""Leakage guards as runtime assertions (spec §3.6), not comments.
-
-Four guards, matching the spec's numbering:
-
-  1. No patient_id in more than one split          -> src/data/splits.py
-     (assert_no_patient_in_multiple_splits, assert_splits_partition_manifest)
-  2. Normalisation stats fitted on train only,
-     used on other data only after fit()           -> src/data/stats.py
-     (TrainStats.is_fitted / NotFittedError)
-  3. No future rows visible at any hour             -> this module
-     (assert_causal_in_time)
-  4. Threshold tau tuned on validation only,
-     test data never passed to the tuning routine  -> src/decision/threshold.py
-     (tune_threshold's split_name assertion)
-
-This module holds guard #3: a generic causality check usable against any
-per-timestep feature-construction function (preprocessing) or sequence
-model (the encoder, once it exists) — perturb a future timestep of the
-input and assert that outputs at or before the perturbed timestep are
-unchanged.
-"""
 from __future__ import annotations
 
 from typing import Callable
@@ -33,16 +12,6 @@ def assert_causal_in_time(
     seed: int = 0,
     atol: float = 1e-8,
 ) -> None:
-    """fn maps (T, C_in) -> (T, C_out) (or any array whose first axis is
-    time). For several random perturbation points, replace X from that
-    point onward with noise and assert fn's output strictly before that
-    point is unchanged. Raises AssertionError with the offending timestep
-    on the first violation found.
-
-    This directly executes the spec's guard #3 ("no forward-looking
-    operation ... exists in the pipeline") against the real function, not
-    just against a description of it.
-    """
     T = X.shape[0]
     if T < 2:
         return  # nothing to perturb

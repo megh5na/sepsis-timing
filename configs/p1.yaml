@@ -1,0 +1,5 @@
+# Condition P1 (spec 6 table). Inherits configs/base.yaml and configs/phase2.yaml.
+# Same trained weights as P2 (condition "P" in phase2.yaml). Only the decision rule differs.
+condition: P1
+trained_as: P
+decision_rule: threshold on F[t, 6], tau tuned on validation

@@ -1,29 +1,3 @@
-"""Stage 4 gate: harness output must match the official scorer exactly
-(spec §7.1, §10.1 stage 4).
-
-No bundled "example data" ships with the official evaluation repos for this
-purpose (checked directly — see src/decision/utility.py docstring and
-third_party/physionet/PROVENANCE.md). Validation here instead runs the
-harness's full write-files-then-call-vendored-scorer path against:
-
-  1. Many synthetic patients under several prediction strategies (never
-     alarm / always alarm from hour 0 / alarm exactly at t_sepsis / random
-     alarm hour), checked two ways:
-       (a) our harness's call to the vendored evaluate_sepsis_score()
-           matches an INDEPENDENT subprocess invocation of the same
-           vendored script's documented CLI, on the exact files our
-           harness wrote — this validates the file-writing/matching logic,
-           not just "we imported the right function".
-       (b) our own utility.py-based cross-check (utility_cross_check)
-           agrees with the vendored scorer's utility number — this
-           validates utility.py independently of the vendored scorer.
-  2. A real slice of downloaded PhysioNet patient files (skipped if the
-     data hasn't been downloaded yet), under the same strategies, as a
-     smoke test against real missingness/length patterns.
-
-If ANY of these disagree, the spec's instruction is to stop and report
-before writing model code — these tests are exactly that gate.
-"""
 from __future__ import annotations
 
 import subprocess
@@ -82,11 +56,6 @@ def _strategy_alarm_at_true_t_sepsis(manifest):
 
 
 def _strategy_random_alarm(manifest, seed=1):
-    """Deterministic *per patient_id*, not a shared stateful RNG walked
-    across calls — predict_fn must be idempotent (safe to call once per
-    patient across multiple full passes, e.g. evaluate() then
-    evaluate_fast() in the same test), not merely reproducible given a
-    fixed call order."""
     idx = manifest.set_index("patient_id")
 
     def fn(pid):
@@ -145,10 +114,6 @@ class TestHarnessMatchesOfficialScorer:
 
     @pytest.mark.parametrize("strategy_name", list(STRATEGIES.keys()))
     def test_evaluate_fast_agrees_with_disk_based_evaluate(self, tmp_path, strategy_name):
-        """The in-memory path used for per-epoch threshold tuning
-        (src/experiments/train.py) must not be a second, divergent
-        implementation — it must match the disk-based, officially-validated
-        evaluate() exactly."""
         manifest = _synthetic_manifest(n=40, seed=(hash(strategy_name) + 1) % 1000)
         predict_fn = STRATEGIES[strategy_name](manifest)
         patient_ids = manifest["patient_id"].tolist()
@@ -161,8 +126,6 @@ class TestHarnessMatchesOfficialScorer:
 
     @pytest.mark.parametrize("strategy_name", list(STRATEGIES.keys()))
     def test_evaluate_fast_utility_only_agrees_too(self, tmp_path, strategy_name):
-        """The utility_only=True shortcut (used by per-epoch threshold
-        tuning) must report the same utility as the full path."""
         manifest = _synthetic_manifest(n=40, seed=(hash(strategy_name) + 2) % 1000)
         predict_fn = STRATEGIES[strategy_name](manifest)
         patient_ids = manifest["patient_id"].tolist()
@@ -173,9 +136,6 @@ class TestHarnessMatchesOfficialScorer:
         assert set(fast_only.keys()) == {"utility", "n_patients"}
 
     def test_never_alarm_utility_is_exactly_zero(self, tmp_path):
-        """Property check independent of the vendored script: inaction's
-        normalised utility is 0 by construction of the normalisation
-        formula (observed == inaction in this case)."""
         manifest = _synthetic_manifest(n=25, seed=7)
         metrics = evaluate(lambda pid: None, manifest["patient_id"].tolist(), manifest,
                             workdir=tmp_path / "never")
@@ -184,9 +144,6 @@ class TestHarnessMatchesOfficialScorer:
 
 
 class TestHarnessOnRealDownloadedData:
-    """Smoke test against real PhysioNet files, if they've been downloaded
-    yet (this file may run before the full download finishes)."""
-
     def _real_slice_manifest(self, n=25):
         from src.data.parse import parse_patient_file
 

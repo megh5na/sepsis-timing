@@ -1,11 +1,3 @@
-"""Leakage guards (spec §3.6) — each covered against the real runtime
-assertion it's supposed to trigger, not just described.
-
-  1. Split disjointness         -> src/data/splits.py
-  2. Train-only stats           -> src/data/stats.py
-  3. Causal-only pipeline       -> src/data/leakage.py, src/data/preprocess.py
-  4. tau tuned on val only      -> src/decision/threshold.py
-"""
 import numpy as np
 import pandas as pd
 import pytest
@@ -108,10 +100,6 @@ class TestGuard2TrainOnlyStats:
         assert np.all(np.isfinite(out))
 
     def test_zero_observation_channel_falls_back_instead_of_crashing(self, capsys):
-        """Real scenario, not hypothetical: EtCO2 is 0% observed across all
-        of Hospital A (confirmed against the full downloaded archive), so
-        the within-hospital Phase 1 split hits a genuinely-never-observed
-        training channel for real. fit() must not hard-fail on this."""
         X_list = [np.array([[1.0, np.nan], [2.0, np.nan], [3.0, np.nan]])]
         stats = TrainStats(n_channels=2).fit(X_list, channel_names=["ok_channel", "never_observed"])
         assert stats.is_fitted
@@ -129,17 +117,6 @@ class TestGuard2TrainOnlyStats:
         assert out[0, 1] == 0.0  # uniformly 0 after z-score, not NaN or a crash
 
     def test_fit_is_only_ever_called_on_declared_training_patients(self):
-        """Regression guard for the *usage pattern*: fitting stats on a
-        mixture that includes non-training patients should not silently
-        succeed as if nothing were wrong — this test documents the
-        contract that callers must slice by split before calling fit(),
-        by showing that TrainStats itself has no notion of "split" and
-        therefore the caller is the one responsible; combined with
-        test_reading_stats_before_fit_raises, this is what makes an
-        accidental val/test leak into the stats *visible* (wrong numbers)
-        rather than a silent crash-free path with no warning at all is
-        exactly the risk this guard exists for.
-        """
         train_only = TrainStats(n_channels=1).fit([np.array([[1.0], [1.0], [1.0]])])
         leaked = TrainStats(n_channels=1).fit([np.array([[1.0], [1.0], [1.0], [100.0]])])
         assert train_only.mean[0] != leaked.mean[0]
@@ -163,8 +140,6 @@ class TestGuard3Causality:
         assert_causal_in_time(fn, X, n_trials=8, seed=0)
 
     def test_causality_check_catches_a_deliberately_broken_pipeline(self):
-        """The guard must actually fire on a leaky pipeline, not just pass
-        vacuously on a correct one."""
         def leaky_fn(x):
             # centred rolling mean: uses FUTURE values -> must be caught
             T = x.shape[0]
@@ -219,9 +194,6 @@ class TestGuard4ThresholdTuning:
             )
 
     def test_tuning_on_train_is_also_refused(self):
-        """Only 'val' is accepted — tuning on train would also be a form of
-        leakage (fitting the threshold to the same data used for gradient
-        updates)."""
         with pytest.raises(ThresholdSplitLeakageError):
             tune_threshold(
                 candidate_thresholds=np.linspace(0, 1, 11),

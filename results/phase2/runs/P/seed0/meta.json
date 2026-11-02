@@ -1,0 +1,28 @@
+{
+  "name": "P",
+  "seed": 0,
+  "cond": {
+    "head": "monotone",
+    "K": 12,
+    "hidden": 64,
+    "mask_delta": true
+  },
+  "n_params": 61452,
+  "best_epoch": 17,
+  "best_val_p1_utility_selection_grid": 0.37890637924233,
+  "tau_p1": 0.030000000000000002,
+  "val_p1_utility_at_tau": 0.37890637924233,
+  "weights_sha256": "e84564568ac582f3e15865dd03ff65b137e6f634848574fff4e417b6df24b832",
+  "epochs_run": 26,
+  "torch_threads": 4,
+  "train_seconds": 1391.3,
+  "training": {
+    "optimizer": "adam",
+    "lr": 0.001,
+    "batch_size": 64,
+    "max_epochs": 50,
+    "patience": 8,
+    "grad_clip": 1.0,
+    "hour_selection": "b"
+  }
+}

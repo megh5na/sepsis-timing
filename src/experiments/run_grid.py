@@ -1,14 +1,3 @@
-"""Full Phase-1 condition x seed grid (spec repo layout: experiments/run_grid.py).
-
-Phase 1 grid: {B0, B1} x seeds x within-hospital split (the only regime run
-in Phase 1 — spec §11.1). B0 has no seed-dependence (rule-based) but is
-still evaluated once per nominal "seed" so results/analyse.py can treat
-every condition uniformly in the results table.
-
-Cross-hospital / pooled splits, the K / hidden-size / mask-delta ablations
-(spec §6.1), and A1/P1/P2 are all Phase 2 (spec §11.1, §10.2 stage 11) —
-not run here.
-"""
 from __future__ import annotations
 
 import argparse
@@ -53,14 +42,6 @@ def run_b0(manifest: pd.DataFrame, processed_root: Path, split_ids: list[str], o
 
 def run_b1_seed(manifest: pd.DataFrame, processed_root: Path, seed: int, out_dir: Path,
                  stats: TrainStats, test_ids: list[str]) -> tuple[dict, dict[str, np.ndarray]]:
-    """`stats` (fit once on the training split, spec §3.6 guard #2) and
-    `test_ids` are passed in rather than recomputed here — fitting stats
-    means a full pass over every training patient's raw tensor, and doing
-    that three times per seed (train_b1 internally, here again, and once
-    more for the bootstrap CI in main()) would triple the most expensive
-    repeated step in this script for no reason. Returns (report, scores)
-    so main() can reuse `scores` for the bootstrap CI instead of
-    re-scoring every test patient a second time."""
     train_result = train_b1(manifest, processed_root, seed=seed, out_dir=out_dir / "B1" / "checkpoints")
 
     model = B1Model()
@@ -97,17 +78,6 @@ def run_b1_seed(manifest: pd.DataFrame, processed_root: Path, seed: int, out_dir
 
 
 def per_patient_utility_components_for_ci(manifest, processed_root, predict_fn, patient_ids) -> np.ndarray:
-    """(n_patients, 3) array of [observed, inaction, best] per patient, for
-    bootstrap_ci with `normalized_utility_statistic` below.
-
-    The reported metric is normalised utility = (sum(observed) -
-    sum(inaction)) / (sum(best) - sum(inaction)) — a ratio of sums across
-    the cohort, not a mean of independently-normalised per-patient values.
-    Bootstrapping the mean of raw per-patient utility would give a CI on a
-    *different* statistic. Instead we keep the three per-patient
-    ingredients and let bootstrap_ci's `statistic` callable recompute the
-    same ratio-of-sums on each resample, which is the correct paired
-    bootstrap for this metric (spec §7.3)."""
     from src.decision.utility import DT_EARLY, DT_LATE, total_utility_for_patient
 
     manifest_idx = manifest.set_index("patient_id")
@@ -141,8 +111,6 @@ def per_patient_utility_components_for_ci(manifest, processed_root, predict_fn, 
 
 
 def normalized_utility_statistic(components: np.ndarray) -> float:
-    """components: (n, 3) array of [observed, inaction, best]. Ratio of
-    sums, matching the official scorer's normalisation exactly."""
     observed_sum = components[:, 0].sum()
     inaction_sum = components[:, 1].sum()
     best_sum = components[:, 2].sum()
